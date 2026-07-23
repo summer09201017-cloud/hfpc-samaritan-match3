@@ -38,7 +38,7 @@
     title: '🍶 好撒瑪利亞人・備品',
     ref: '路加福音 10:33-35',
     intro1: '「看見他就動了慈心，上前用油和酒倒在他的傷處，包裹好了」(路 10:33-34)',
-    how: '有人被打傷躺在路旁!點一個備品、再點旁邊的一個交換;排成一排 3 個同款就「收進行囊」——油、酒、裹傷布,照顧他的都備齊。這一關「斜的一排也算」:憐憫多算一步(路 10:35)。收的時候會先用金繩捆一捆、亮一下,再一起收進去——慢慢看,不用急。連出 4 個以上會出現慈心方塊,點一下整排整列一起收!',
+    how: '有人被打傷躺在路旁!點一個備品、再點旁邊的一個交換;排成一排 3 個同款就「收進行囊」——油、酒、裹傷布,照顧他的都備齊。這一關「斜的一排也算」:憐憫多算一步(路 10:35)。收的時候會先用金繩捆一捆、亮一下,再一起收進去——慢慢看,不用急。連出 4 個以上會出現慈心方塊,點一下整排整列＋旁邊一圈一起收!',
     pick: '那條路上,需要一顆動了慈心的心:',
     hud: (p, goal) => `🍶 已備 ${p}/${goal} 份`,
     gather: '收進行囊!',
@@ -47,7 +47,7 @@
     noswap: '這樣排不成一排——輕輕放回去',
     crowCome: '路上捲起小旋風…',
     crowGo: '旋風散了',
-    rainbowBorn: '慈心方塊!點它,整排整列一起收',
+    rainbowBorn: '慈心方塊!點它,整排整列＋旁邊一圈一起收',
     rainbowGo: '動了慈心,全都備齊!',
     bind: '金繩捆一捆…',
     closeLine: '此外所費用的，我回來必還你。(路 10:35)',
@@ -86,6 +86,8 @@
       this.flyers = [] // 上船中的動物
       this.birds = [] // 飛走中的烏鴉
       this.pops = [] // 收取瞬間的 Q 彈圈
+      this.shocks = [] // 💥 爆收衝擊波光環
+      this.sparks = [] // 💥 爆收煙火
       this.confetti = []
       this.shakeBack = null
       this.toasts = []
@@ -182,7 +184,7 @@
       this.sel = null
       this.lock = 0.5
       this.collected = 0
-      this.flyers = []; this.birds = []; this.pops = []; this.toasts = []; this.confetti = []
+      this.flyers = []; this.birds = []; this.pops = []; this.toasts = []; this.confetti = []; this.shocks = []; this.sparks = []
       this.crowT = 14
       this.pending = null
       this.blessPlayed = false
@@ -244,7 +246,7 @@
     _hasMove() {
       const n = this.cfg.size
       const g = this.grid
-      // 場上有彩虹=永遠有一手(點它就整排整列上船)
+      // 場上有彩虹=永遠有一手(點它就整排整列＋旁邊一圈上船)
       for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (g[r][c].kind === 'rainbow') return true
       const trySwap = (r1, c1, r2, c2) => {
         const a = g[r1][c1].kind, b = g[r2][c2].kind
@@ -343,7 +345,7 @@
       return -1
     }
 
-    // 點彩虹:整排整列一起上船(恩典多給;烏鴉被嚇飛,不算數也不扣分)
+    // 點彩虹:整排整列＋旁邊一圈一起上船(恩典多給;烏鴉被嚇飛,不算數也不扣分)
     _rainbowClear(r, c) {
       const g = this._geo()
       const n = this.cfg.size
@@ -359,6 +361,21 @@
       }
       for (let cc = 0; cc < n; cc++) take(r, cc)
       for (let rr = 0; rr < n; rr++) if (rr !== r) take(rr, c)
+      // 💥 爆收範圍加大(07-24,連鏈家族同款精神):整排整列＋旁邊一圈之外,周圍一圈也一起收
+      for (const [dr, dc] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+        const rr = r + dr, cc = c + dc
+        if (rr >= 0 && cc >= 0 && rr < n && cc < n) take(rr, cc)
+      }
+      // 💥 擴散衝擊波光環(範圍看得見)+煙火 40 顆
+      const pc0 = this._cellXY(r, c, g)
+      this.shocks.push({ x: pc0.x, y: pc0.y, t: 0 })
+      if (!this.reduced) {
+        const FW = ['#ffd54a', '#ff8a5a', '#8ae08a', '#7ab8ff', '#e08ae0']
+        for (let i = 0; i < 40; i++) {
+          const a = Math.random() * Math.PI * 2, v = 90 + Math.random() * 220
+          this.sparks.push({ x: pc0.x, y: pc0.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, t: 0, color: FW[i % 5] })
+        }
+      }
       this.collected += count
       this.rainbowFxT = 1.6
       this.toasts.push({ text: T.rainbowGo, t: this._t })
@@ -456,6 +473,10 @@
       this.birds = this.birds.filter((b) => b.t < 1.6)
       for (const p of this.pops) p.t += dt * 3
       this.pops = this.pops.filter((p) => p.t < 1)
+      for (const sfx of this.shocks) sfx.t += dt * 1.8
+      this.shocks = this.shocks.filter((sfx) => sfx.t < 1)
+      for (const sp of this.sparks) { sp.t += dt; sp.x += sp.vx * dt; sp.y += sp.vy * dt; sp.vy += 260 * dt }
+      this.sparks = this.sparks.filter((sp) => sp.t < 0.9)
       if (this.rainbowFxT > 0) this.rainbowFxT -= dt
       for (const c of this.confetti) { c.y += c.vy * dt; c.x += c.vx * dt; c.rot += c.vr * dt }
       this.confetti = this.confetti.filter((c) => c.y < VH + 20)
@@ -682,6 +703,22 @@
         ctx.globalAlpha = 1 - p.t
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 3
         ctx.beginPath(); ctx.arc(p.x, p.y, 10 + p.t * 26, 0, 7); ctx.stroke()
+        ctx.globalAlpha = 1
+      }
+      // 💥 爆收衝擊波光環(雙圈擴散)+煙火
+      for (const sfx of this.shocks) {
+        const k = sfx.t
+        ctx.globalAlpha = (1 - k) * 0.9
+        ctx.strokeStyle = '#ffd54a'; ctx.lineWidth = 6 * (1 - k) + 2
+        ctx.beginPath(); ctx.arc(sfx.x, sfx.y, 24 + k * 300, 0, 7); ctx.stroke()
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3
+        ctx.beginPath(); ctx.arc(sfx.x, sfx.y, 12 + k * 210, 0, 7); ctx.stroke()
+        ctx.globalAlpha = 1
+      }
+      for (const sp of this.sparks) {
+        ctx.globalAlpha = Math.max(0, 1 - sp.t / 0.9)
+        ctx.fillStyle = sp.color
+        ctx.beginPath(); ctx.arc(sp.x, sp.y, 3.2, 0, 7); ctx.fill()
         ctx.globalAlpha = 1
       }
       // 上船中的動物(飛行途中縮小一點)
