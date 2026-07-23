@@ -1,0 +1,13 @@
+{
+  "name": "好撒瑪利亞人・備品",
+  "short_name": "好撒瑪利亞人",
+  "description": "點兩個相鄰的備品交換,橫直斜三連就收進行囊——油和酒倒在他的傷處!憐憫多算一步(路加福音 10,和合本)",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#e4d4b0",
+  "theme_color": "#b07828",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
